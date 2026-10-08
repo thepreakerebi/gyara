@@ -1,51 +1,46 @@
-# Running Gyara on N-ATLAS (Kaggle)
+# Running Gyara on N-ATLAS (Colab or Kaggle)
 
 The constrained-decoding backend and the JSON-validity benchmark need a GPU and the
-gated N-ATLAS weights. This runs them on Kaggle's free GPU.
+gated N-ATLAS weights. **Colab is recommended** — its Python 3.10 has a prebuilt
+`outlines_core` wheel, whereas Kaggle's Python 3.11 tries (and fails) to compile it.
 
 ## Before you start
 
 1. Accept the N-ATLaS licence: <https://huggingface.co/NCAIR1/N-ATLaS> (sign in → Agree).
 2. Create a Hugging Face **read** token: <https://huggingface.co/settings/tokens>.
 
-## Set up the notebook
+## Google Colab (recommended)
 
-1. New Kaggle Notebook → **Settings**:
-   - **Accelerator:** GPU T4 (or 2×T4).
-   - **Internet:** On.
-2. **Add-ons → Secrets:** add a secret named `HF_TOKEN` with your token. Do not paste
-   the token into a cell.
+1. New notebook → **Runtime → Change runtime type → T4 GPU**.
+2. Secrets (the 🔑 icon, left sidebar) → add `HF_TOKEN` with your token, toggle
+   **Notebook access** on. Don't paste the token into a cell.
+3. Cell 1 — install (clone into `gyara_src`, not `gyara`, to avoid shadowing the package):
 
-## Install Gyara
+   ```python
+   !git clone -q https://github.com/thepreakerebi/gyara.git gyara_src
+   !pip install -q ./gyara_src/python outlines==0.1.14 jsonschema pydantic
+   ```
 
-The repo is public. Clone then install from the local path — this avoids shell
-quoting pitfalls (`#` and `[]`), and Kaggle already ships torch + transformers:
+4. Cell 2 — run:
 
-```python
-!git clone -q https://github.com/thepreakerebi/gyara.git
-!pip install -q ./gyara/python outlines==0.1.14 jsonschema pydantic
+   ```python
+   import urllib.request
+   url = "https://raw.githubusercontent.com/thepreakerebi/gyara/main/python/notebooks/run_benchmark.py"
+   exec(urllib.request.urlopen(url).read().decode()); main()
+   ```
+
+## Kaggle (alternative)
+
+Same two cells, but add the secret under **Add-ons → Secrets** (`HF_TOKEN`), and set
+**Settings → Accelerator → GPU T4 ×2** with Internet on. If `outlines` fails to build
+on Kaggle, use Colab.
+
+## Expected output
+
 ```
-
-## Run the benchmark
-
-Paste the contents of [`kaggle_run.py`](./kaggle_run.py) into a cell and call it:
-
-```python
-main()
-```
-
-Expected output — two lines, the headline numbers for Pillar 1:
-
-```
-RAW    valid  N/8 (xx%)  failures=[...]
-GYARA  valid  8/8 (100%) failures=[]
+RAW    valid N/8 (xx%)  failures=[...]
+GYARA  valid 8/8 (100%) failures=[]
 ```
 
 `GYARA` is valid by construction; `RAW` is the base model prompted for JSON. The gap
-is the benchmark result. Record both numbers and screenshot this cell for the demo.
-
-## Notes
-
-- Phase 1 loads the raw model, measures the baseline, then frees GPU memory before
-  phase 2 loads the constrained model — so both fit on one T4.
-- Pin `outlines==0.1.14` (the `outlines.generate.json` API this code targets).
+is the benchmark result. Screenshot this cell for the demo.

@@ -1,8 +1,7 @@
 """Run the Gyara JSON-validity benchmark on the live N-ATLAS model.
 
-Designed for a Kaggle GPU notebook (see notebooks/README.md). It loads N-ATLAS once
-for the raw baseline, frees it, then loads the constrained Outlines model — so both
-phases fit on a single 16 GB T4.
+Designed for a Colab or Kaggle GPU notebook (see notebooks/README.md). It loads
+N-ATLAS for the raw baseline, frees it, then loads the constrained Outlines model.
 
 This script needs a GPU and the gated weights; it is intentionally not part of the
 local test suite. The harness logic it calls (`gyara.benchmark`) is unit-tested.
@@ -15,15 +14,24 @@ import os
 
 
 def load_token() -> None:
-    """Populate HF_TOKEN from a Kaggle Secret if it isn't already in the environment."""
+    """Populate HF_TOKEN from Colab or Kaggle secrets, if not already in the env."""
     if os.environ.get("HF_TOKEN"):
         return
-    try:
+    try:  # Colab
+        from google.colab import userdata
+
+        os.environ["HF_TOKEN"] = userdata.get("HF_TOKEN")
+        return
+    except Exception:  # noqa: BLE001 - not on Colab
+        pass
+    try:  # Kaggle
         from kaggle_secrets import UserSecretsClient
 
         os.environ["HF_TOKEN"] = UserSecretsClient().get_secret("HF_TOKEN")
-    except Exception as exc:  # noqa: BLE001 - optional on non-Kaggle hosts
-        print(f"No Kaggle secret ({exc}); relying on HF_TOKEN env var.")
+        return
+    except Exception:  # noqa: BLE001 - not on Kaggle
+        pass
+    print("No Colab/Kaggle secret found; relying on the HF_TOKEN env var.")
 
 
 def run_raw_phase() -> None:
