@@ -18,18 +18,11 @@ gated N-ATLAS weights. This runs them on Kaggle's free GPU.
 
 ## Install Gyara
 
-The repo is private, so install with a GitHub token (store it as a second Kaggle
-secret `GH_TOKEN`), or make the repo public first. In a cell:
+The repo is public, so install it directly. In a cell:
 
 ```python
-import os
-from kaggle_secrets import UserSecretsClient
-gh = UserSecretsClient().get_secret("GH_TOKEN")
-url = f"git+https://{gh}@github.com/thepreakerebi/gyara.git#subdirectory=python"
-!pip install -q "gyara[model] @ {url}" "outlines==0.1.14"
+!pip install -q "gyara[model] @ git+https://github.com/thepreakerebi/gyara.git#subdirectory=python" "outlines==0.1.14"
 ```
-
-(If the repo is public, drop `GH_TOKEN` and use the plain URL.)
 
 ## Run the benchmark
 
