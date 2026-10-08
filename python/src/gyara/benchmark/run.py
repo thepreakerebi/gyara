@@ -48,7 +48,8 @@ def main() -> None:
 
     print(f"Loading N-ATLAS once ({len(TASKS)} tasks)...")
     model, tokenizer = load_natlas()
-    client = Structured(PromptedJsonBackend(model, tokenizer))
+    backend = PromptedJsonBackend(model, tokenizer)
+    client = Structured(backend)
 
     def raw_fn(prompt: str, schema: dict) -> str:
         return raw_generate(model, tokenizer, _raw_prompt(prompt, schema))
@@ -57,16 +58,18 @@ def main() -> None:
     raw = run_raw(TASKS, raw_fn)
     print(f"RAW    valid {raw.valid}/{raw.total} ({raw.rate:.0%})  failures={list(raw.failures)}")
 
-    # Print every Gyara output so content can be verified, not just validity.
-    print("\nPhase 2/2 - Gyara structured output (shown in full to confirm real content)")
+    # Print the raw model text and the final result per task, to verify content.
+    print("\nPhase 2/2 - Gyara structured output (raw model text + extracted result)")
     valid = 0
     for name, prompt, schema in TASKS:
+        raw = backend.raw_completion(prompt, schema)
+        print(f"  [{name}] raw: {raw[:200]!r}")
         try:
             result = client.generate(prompt, schema)
-            print(f"  {name}: {result}")
+            print(f"  [{name}] -> {result}")
             valid += 1
         except Exception as exc:  # noqa: BLE001 - surface the real error per task
-            print(f"  {name}: FAILED {exc!r}")
+            print(f"  [{name}] -> FAILED {exc!r}")
     print(f"GYARA  valid {valid}/{len(TASKS)} ({valid / len(TASKS):.0%})")
 
 

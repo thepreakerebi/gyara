@@ -52,22 +52,12 @@ def extract_json(text: str) -> Any:
     return candidates[0]
 
 
-def _allowed_values(schema: dict) -> str:
-    """Plain-language note on any enum fields, to steer the model to valid choices."""
-    notes = []
-    for key, sub in schema.get("properties", {}).items():
-        if isinstance(sub, dict) and sub.get("enum"):
-            notes.append(f'"{key}" must be one of: {", ".join(map(str, sub["enum"]))}')
-    return (" " + "; ".join(notes) + ".") if notes else ""
-
-
 def _instruction(prompt: str, schema: dict) -> str:
+    # This exact wording is known to elicit real values from N-ATLAS (e.g. the
+    # transfer task returns the actual recipient and amount).
     return (
-        f"{prompt}\n\n"
-        f"Extract the answer and reply with ONLY a JSON object matching this schema, "
-        f"filled with the real values from the text (not blanks or zeros):\n"
-        f"{json.dumps(schema)}.{_allowed_values(schema)}\n"
-        f"No markdown, no code fences, no explanation. JSON:"
+        f"{prompt}\n\nRespond with ONLY a JSON object matching this schema "
+        f"(no markdown, no explanation):\n{json.dumps(schema)}\nJSON:"
     )
 
 
@@ -101,6 +91,10 @@ class PromptedJsonBackend:
         return self._tokenizer.decode(
             output[0][inputs["input_ids"].shape[1] :], skip_special_tokens=True
         )
+
+    def raw_completion(self, prompt: str, schema: dict) -> str:
+        """Return the model's raw text for the guided prompt (for diagnostics)."""
+        return self._generate(_instruction(prompt, to_json_schema(schema)))
 
     def generate_json(self, prompt: str, schema: dict) -> Any:
         schema_dict = to_json_schema(schema)
