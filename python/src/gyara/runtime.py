@@ -72,17 +72,24 @@ def encoder_from_tokenizer(tokenizer: Any) -> Callable[[str], Sequence[int]]:
 
 
 def load_natlas(
-    model_id: str = DEFAULT_MODEL_ID, *, token: str | None = None, load_in_4bit: bool = True
+    model_id: str = DEFAULT_MODEL_ID, *, token: str | None = None, load_in_4bit: bool = False
 ) -> tuple[Any, Any]:
     """Load N-ATLAS once and return ``(model, tokenizer)``.
 
-    By default loads in 4-bit (nf4) so the 8B model fits entirely on a single 16 GB
-    GPU (e.g. Colab's free T4) instead of being offloaded to CPU, which makes
-    generation crawl. Falls back to fp16 if bitsandbytes is unavailable. The same
-    model serves both the raw baseline and the constrained backend.
+    Defaults to fp16 with ``device_map="auto"``, which shards the 8B model across
+    available GPUs (e.g. Kaggle's 2x T4 = 32 GB) and tolerates CPU offload if memory
+    is tight. Set ``load_in_4bit=True`` only on a single 16 GB GPU with bitsandbytes
+    available (it refuses to load if anything spills to CPU). Frees leftover GPU
+    memory first, so repeated runs in one kernel don't accumulate.
     """
+    import gc
+
     import torch
     from transformers import AutoModelForCausalLM, AutoTokenizer
+
+    gc.collect()
+    if torch.cuda.is_available():
+        torch.cuda.empty_cache()
 
     auth = resolve_token(token)
     tokenizer = AutoTokenizer.from_pretrained(model_id, token=auth)
