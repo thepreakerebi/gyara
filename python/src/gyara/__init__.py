@@ -18,11 +18,20 @@ from .normalize import (
     normalize_text,
     strip_diacritics,
 )
+from .structured import (
+    SchemaError,
+    Structured,
+    StructuredBackend,
+    StubBackend,
+    Tool,
+    ToolCall,
+)
 
 __version__ = "0.1.0"
 
 __all__ = [
     "__version__",
+    # Pillar 2 — normalization
     "normalize_text",
     "strip_diacritics",
     "DictionaryRestorer",
@@ -30,4 +39,11 @@ __all__ = [
     "TokenBudget",
     "TokenReport",
     "NATLAS_CONTEXT_LIMIT",
+    # Pillar 1 — structured output
+    "Structured",
+    "StructuredBackend",
+    "StubBackend",
+    "Tool",
+    "ToolCall",
+    "SchemaError",
 ]

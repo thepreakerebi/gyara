@@ -41,10 +41,37 @@ uv run ruff check .
 uv run pytest
 ```
 
+## Pillar 1 — guaranteed structured output
+
+```python
+from pydantic import BaseModel
+from gyara.structured import Structured, Tool
+
+class Transfer(BaseModel):
+    name: str
+    amount: int
+
+client = Structured(backend)          # a constrained-decoding backend on a GPU host,
+                                      # or StubBackend() for local dev/tests
+
+# Schema-valid JSON, or a clear error — never half-parsed text.
+data = client.generate("Send 5k to Chidi for market", schema=Transfer)
+
+# Tool-calling where the arguments are tied to the chosen tool.
+send = Tool("send_money", "Send money to a contact",
+            parameters={"type": "object",
+                        "properties": {"to": {"type": "string"}, "amount": {"type": "integer"}},
+                        "required": ["to", "amount"]})
+call = client.call_tool("Pay Ada 10", tools=[send])   # -> ToolCall(name, arguments)
+```
+
+The schema/validation/tool layer is pure-python (`gyara[structured]`). The
+constrained-decoding backend that enforces validity on N-ATLAS runs where the model
+runs and is wired in the `model` extra.
+
 ## Roadmap
 
-- **Pillar 1 — structured output:** schema-constrained `generate()` and `call_tool()`
-  (runs where the model runs; see the monorepo roadmap).
+- **Constrained-decoding backend** on N-ATLAS (the `model` extra), validated on a GPU host.
 - Learned diacritic restorer and curated Yoruba/Hausa lexicons.
 
 ## License

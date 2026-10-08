@@ -12,11 +12,12 @@ keywords = ["n-atlas", "nigeria", "llm", "structured-output", "yoruba", "hausa",
 dependencies = []
 
 [project.optional-dependencies]
-# Only needed where the model actually runs (Kaggle/Colab/GPU host).
-model = ["transformers>=4.44", "torch>=2.2"]
-structured = ["outlines>=0.1.0"]
+# Structured output: schema handling + validation (pure-python, no GPU).
+structured = ["jsonschema>=4.0", "pydantic>=2.7"]
+# The constrained-decoding backend + model, only where the model runs.
+model = ["transformers>=4.44", "torch>=2.2", "outlines>=0.1.0"]
 gateway = ["fastapi>=0.115", "uvicorn>=0.30", "pydantic>=2.7"]
-dev = ["pytest>=8.0", "ruff>=0.6"]
+dev = ["pytest>=8.0", "ruff>=0.6", "jsonschema>=4.0", "pydantic>=2.7"]
 
 [build-system]
 requires = ["hatchling"]
