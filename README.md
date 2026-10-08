@@ -44,8 +44,8 @@ the model's own accuracy — Gyara guarantees the *structure*, not the model's r
   backend and benchmark.
 - [`typescript/`](./typescript) — the TypeScript SDK for Node and the browser
   (typed client, Zod → JSON Schema, client-side normalizer).
-- `gateway/` — the OpenAI-compatible proxy that does constrained decoding server-side.
-  _Coming._
+- [`python/src/gyara/gateway`](./python/src/gyara/gateway) — the HTTP proxy
+  (`POST /v1/structured`) both SDKs and any app call; runs the generation server-side.
 
 ## Architecture
 

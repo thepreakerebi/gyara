@@ -18,8 +18,8 @@ npm install zod
 import { z } from "zod";
 import { Structured, GatewayBackend, Tool } from "gyara";
 
-// Point at the Gyara Gateway (constrained decoding runs server-side on N-ATLAS).
-const client = new Structured(new GatewayBackend("https://your-gateway/v1"));
+// Point at the Gyara Gateway (generation runs server-side on N-ATLAS).
+const client = new Structured(new GatewayBackend("https://your-gateway/v1/structured"));
 
 const Transfer = z.object({ name: z.string(), amount: z.number().int() });
 const data = await client.generate("Send 5k to Chidi for market", Transfer);
