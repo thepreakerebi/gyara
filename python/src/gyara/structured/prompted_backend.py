@@ -78,26 +78,13 @@ class PromptedJsonBackend:
         self._tokenizer = tokenizer
         self._max_new_tokens = max_new_tokens
         self._retries = retries
-        self._device = model.get_input_embeddings().weight.device
 
     def _generate(self, text: str) -> str:
-        # N-ATLAS is instruction-tuned: format as a user turn via the chat template,
-        # or it echoes the prompt and degenerates. repetition_penalty stops `}}}}` loops.
-        messages = [{"role": "user", "content": text}]
-        try:
-            input_ids = self._tokenizer.apply_chat_template(
-                messages, add_generation_prompt=True, return_tensors="pt"
-            ).to(self._device)
-        except Exception:  # noqa: BLE001 - tokenizer without a chat template
-            input_ids = self._tokenizer(text, return_tensors="pt").input_ids.to(self._device)
-        output = self._model.generate(
-            input_ids=input_ids,
-            max_new_tokens=self._max_new_tokens,
-            do_sample=False,
-            repetition_penalty=1.15,
-            pad_token_id=self._tokenizer.eos_token_id,
+        from .._generate import chat_generate
+
+        return chat_generate(
+            self._model, self._tokenizer, text, max_new_tokens=self._max_new_tokens
         )
-        return self._tokenizer.decode(output[0][input_ids.shape[1] :], skip_special_tokens=True)
 
     def raw_completion(self, prompt: str, schema: dict) -> str:
         """Return the model's raw text for the guided prompt (for diagnostics)."""
