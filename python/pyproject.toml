@@ -15,7 +15,7 @@ dependencies = []
 # Structured output: schema handling + validation (pure-python, no GPU).
 structured = ["jsonschema>=4.0", "pydantic>=2.7"]
 # The model runtime + a pure-Python constrained decoder (no Rust toolchain needed).
-model = ["transformers>=4.44", "torch>=2.2", "lm-format-enforcer>=0.10"]
+model = ["transformers>=4.44", "torch>=2.2", "lm-format-enforcer>=0.10", "bitsandbytes>=0.43"]
 # Optional alternative constrained-decoding backend (needs a Rust toolchain to build).
 outlines = ["outlines>=0.1.0"]
 gateway = ["fastapi>=0.115", "uvicorn>=0.30", "pydantic>=2.7"]

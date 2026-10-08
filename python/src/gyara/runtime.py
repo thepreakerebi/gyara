@@ -71,21 +71,39 @@ def encoder_from_tokenizer(tokenizer: Any) -> Callable[[str], Sequence[int]]:
     return encode
 
 
-def load_natlas(model_id: str = DEFAULT_MODEL_ID, *, token: str | None = None) -> tuple[Any, Any]:
+def load_natlas(
+    model_id: str = DEFAULT_MODEL_ID, *, token: str | None = None, load_in_4bit: bool = True
+) -> tuple[Any, Any]:
     """Load N-ATLAS once and return ``(model, tokenizer)``.
 
-    Uses ``device_map="auto"`` so the 8B model shards across available GPUs (e.g.
-    two T4s) instead of overflowing a single card. The same model serves both the
-    raw baseline and the constrained backend, so it is loaded only once.
+    By default loads in 4-bit (nf4) so the 8B model fits entirely on a single 16 GB
+    GPU (e.g. Colab's free T4) instead of being offloaded to CPU, which makes
+    generation crawl. Falls back to fp16 if bitsandbytes is unavailable. The same
+    model serves both the raw baseline and the constrained backend.
     """
     import torch
     from transformers import AutoModelForCausalLM, AutoTokenizer
 
     auth = resolve_token(token)
     tokenizer = AutoTokenizer.from_pretrained(model_id, token=auth)
-    model = AutoModelForCausalLM.from_pretrained(
-        model_id, token=auth, torch_dtype=torch.float16, device_map="auto"
-    )
+
+    kwargs: dict[str, Any] = {"token": auth, "device_map": "auto"}
+    if load_in_4bit:
+        try:
+            import bitsandbytes  # noqa: F401  # ensure the backend is installed
+            from transformers import BitsAndBytesConfig
+
+            kwargs["quantization_config"] = BitsAndBytesConfig(
+                load_in_4bit=True,
+                bnb_4bit_quant_type="nf4",
+                bnb_4bit_compute_dtype=torch.float16,
+            )
+        except Exception:  # noqa: BLE001 - no bitsandbytes: fall back to fp16
+            kwargs["torch_dtype"] = torch.float16
+    else:
+        kwargs["torch_dtype"] = torch.float16
+
+    model = AutoModelForCausalLM.from_pretrained(model_id, **kwargs)
     return model, tokenizer
 
 

@@ -18,7 +18,7 @@ Rust toolchain), so it installs cleanly on both Colab and Kaggle images.
 
    ```python
    !git clone -q https://github.com/thepreakerebi/gyara.git gyara_src
-   !pip install -q ./gyara_src/python lm-format-enforcer jsonschema pydantic
+   !pip install -q ./gyara_src/python lm-format-enforcer jsonschema pydantic bitsandbytes
    ```
 
 4. Cell 2 — run:
