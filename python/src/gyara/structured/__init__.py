@@ -3,6 +3,7 @@
 from .backend import StructuredBackend, StubBackend, minimal_instance
 from .client import Structured
 from .outlines_backend import OutlinesBackend
+from .prompted_backend import PromptedJsonBackend, extract_json
 from .schema import SchemaError, to_json_schema, validate
 from .tools import Tool, ToolCall, tool_choice_schema
 from .transformers_backend import TransformersJsonBackend, first_json_object
@@ -11,6 +12,8 @@ __all__ = [
     "Structured",
     "StructuredBackend",
     "StubBackend",
+    "PromptedJsonBackend",
+    "extract_json",
     "OutlinesBackend",
     "TransformersJsonBackend",
     "first_json_object",

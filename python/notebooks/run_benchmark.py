@@ -42,11 +42,11 @@ def main() -> None:
 
     from gyara.benchmark import TASKS, run_gyara, run_raw
     from gyara.runtime import load_natlas, raw_generate
-    from gyara.structured import Structured, TransformersJsonBackend
+    from gyara.structured import PromptedJsonBackend, Structured
 
     print(f"Loading N-ATLAS once ({len(TASKS)} tasks)...")
     model, tokenizer = load_natlas()
-    client = Structured(TransformersJsonBackend(model, tokenizer))
+    client = Structured(PromptedJsonBackend(model, tokenizer))
 
     def raw_fn(prompt: str, schema: dict) -> str:
         return raw_generate(model, tokenizer, _raw_prompt(prompt, schema))
