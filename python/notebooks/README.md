@@ -18,10 +18,12 @@ gated N-ATLAS weights. This runs them on Kaggle's free GPU.
 
 ## Install Gyara
 
-The repo is public, so install it directly. In a cell:
+The repo is public. Clone then install from the local path — this avoids shell
+quoting pitfalls (`#` and `[]`), and Kaggle already ships torch + transformers:
 
 ```python
-!pip install -q "gyara[model] @ git+https://github.com/thepreakerebi/gyara.git#subdirectory=python" "outlines==0.1.14"
+!git clone -q https://github.com/thepreakerebi/gyara.git
+!pip install -q ./gyara/python outlines==0.1.14 jsonschema pydantic
 ```
 
 ## Run the benchmark

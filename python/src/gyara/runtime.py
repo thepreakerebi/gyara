@@ -71,22 +71,25 @@ def encoder_from_tokenizer(tokenizer: Any) -> Callable[[str], Sequence[int]]:
 
 
 def load_outlines_model(
-    model_id: str = DEFAULT_MODEL_ID, *, token: str | None = None, device: str = "cuda"
+    model_id: str = DEFAULT_MODEL_ID, *, token: str | None = None
 ) -> Any:
-    """Load N-ATLAS as an Outlines model for :class:`~gyara.structured.OutlinesBackend`."""
+    """Load N-ATLAS as an Outlines model for :class:`~gyara.structured.OutlinesBackend`.
+
+    Uses ``device_map="auto"`` so the 8B model shards across available GPUs (e.g.
+    Kaggle's 2x T4) instead of overflowing a single card.
+    """
     import outlines
 
     auth = resolve_token(token)
     return outlines.models.transformers(
         model_id,
-        device=device,
-        model_kwargs={"token": auth},
+        model_kwargs={"token": auth, "device_map": "auto", "torch_dtype": "float16"},
         tokenizer_kwargs={"token": auth},
     )
 
 
 def load_text_generator(
-    model_id: str = DEFAULT_MODEL_ID, *, token: str | None = None, device: str = "cuda"
+    model_id: str = DEFAULT_MODEL_ID, *, token: str | None = None
 ) -> Callable[[str, int], str]:
     """Return an *unconstrained* text generator — the benchmark's raw baseline.
 
@@ -99,11 +102,12 @@ def load_text_generator(
     auth = resolve_token(token)
     tokenizer = AutoTokenizer.from_pretrained(model_id, token=auth)
     model = AutoModelForCausalLM.from_pretrained(
-        model_id, token=auth, torch_dtype=torch.float16, device_map=device
+        model_id, token=auth, torch_dtype=torch.float16, device_map="auto"
     )
+    input_device = model.get_input_embeddings().weight.device
 
     def generate(prompt: str, max_new_tokens: int = 512) -> str:
-        inputs = tokenizer(prompt, return_tensors="pt").to(model.device)
+        inputs = tokenizer(prompt, return_tensors="pt").to(input_device)
         output = model.generate(
             **inputs, max_new_tokens=max_new_tokens, do_sample=False
         )
