@@ -9,7 +9,6 @@ local test suite. The harness logic it calls (`gyara.benchmark`) is unit-tested.
 
 from __future__ import annotations
 
-import gc
 import os
 
 
@@ -34,55 +33,32 @@ def load_token() -> None:
     print("No Colab/Kaggle secret found; relying on the HF_TOKEN env var.")
 
 
-def run_raw_phase() -> None:
-    from gyara.benchmark import TASKS, run_raw
-    from gyara.runtime import load_text_generator
-
-    generate = load_text_generator()
-
-    def raw_generate(prompt: str, schema: dict) -> str:
-        instruction = (
-            f"{prompt}\nReturn ONLY a JSON object matching this schema:\n{schema}"
-        )
-        return generate(instruction, 256)
-
-    result = run_raw(TASKS, raw_generate)
-    print(
-        f"RAW    valid {result.valid}/{result.total} "
-        f"({result.rate:.0%})  failures={list(result.failures)}"
-    )
-
-
-def run_gyara_phase() -> None:
-    from gyara.benchmark import TASKS, run_gyara
-    from gyara.runtime import load_outlines_model
-    from gyara.structured import OutlinesBackend, Structured
-
-    client = Structured(OutlinesBackend(load_outlines_model()))
-    result = run_gyara(TASKS, client)
-    print(
-        f"GYARA  valid {result.valid}/{result.total} "
-        f"({result.rate:.0%})  failures={list(result.failures)}"
-    )
-
-
-def free_gpu() -> None:
-    gc.collect()
-    try:
-        import torch
-
-        torch.cuda.empty_cache()
-    except Exception:  # noqa: BLE001
-        pass
-
-
 def main() -> None:
     load_token()
-    print("Phase 1/2 — raw N-ATLAS baseline")
-    run_raw_phase()
-    free_gpu()
-    print("Phase 2/2 — Gyara constrained output")
-    run_gyara_phase()
+
+    from gyara.benchmark import TASKS, run_gyara, run_raw
+    from gyara.runtime import load_natlas, raw_generate
+    from gyara.structured import Structured, TransformersJsonBackend
+
+    print(f"Loading N-ATLAS once ({len(TASKS)} tasks)...")
+    model, tokenizer = load_natlas()
+
+    print("Phase 1/2 - raw N-ATLAS baseline")
+    raw = run_raw(
+        TASKS,
+        lambda prompt, schema: raw_generate(
+            model, tokenizer, f"{prompt}\nReturn only a JSON object matching: {schema}"
+        ),
+    )
+    print(f"RAW    valid {raw.valid}/{raw.total} ({raw.rate:.0%})  failures={list(raw.failures)}")
+
+    print("Phase 2/2 - Gyara constrained output")
+    client = Structured(TransformersJsonBackend(model, tokenizer))
+    gyara = run_gyara(TASKS, client)
+    print(
+        f"GYARA  valid {gyara.valid}/{gyara.total} "
+        f"({gyara.rate:.0%})  failures={list(gyara.failures)}"
+    )
 
 
 if __name__ == "__main__":

@@ -1,8 +1,8 @@
 # Running Gyara on N-ATLAS (Colab or Kaggle)
 
 The constrained-decoding backend and the JSON-validity benchmark need a GPU and the
-gated N-ATLAS weights. **Colab is recommended** — its Python 3.10 has a prebuilt
-`outlines_core` wheel, whereas Kaggle's Python 3.11 tries (and fails) to compile it.
+gated N-ATLAS weights. The default backend uses `lm-format-enforcer` (pure Python, no
+Rust toolchain), so it installs cleanly on both Colab and Kaggle images.
 
 ## Before you start
 
@@ -18,7 +18,7 @@ gated N-ATLAS weights. **Colab is recommended** — its Python 3.10 has a prebui
 
    ```python
    !git clone -q https://github.com/thepreakerebi/gyara.git gyara_src
-   !pip install -q ./gyara_src/python outlines==0.1.14 jsonschema pydantic
+   !pip install -q ./gyara_src/python lm-format-enforcer jsonschema pydantic
    ```
 
 4. Cell 2 — run:

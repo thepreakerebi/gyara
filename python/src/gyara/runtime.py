@@ -20,8 +20,9 @@ __all__ = [
     "resolve_token",
     "load_dotenv",
     "encoder_from_tokenizer",
+    "load_natlas",
+    "raw_generate",
     "load_outlines_model",
-    "load_text_generator",
     "DEFAULT_MODEL_ID",
 ]
 
@@ -70,31 +71,12 @@ def encoder_from_tokenizer(tokenizer: Any) -> Callable[[str], Sequence[int]]:
     return encode
 
 
-def load_outlines_model(
-    model_id: str = DEFAULT_MODEL_ID, *, token: str | None = None
-) -> Any:
-    """Load N-ATLAS as an Outlines model for :class:`~gyara.structured.OutlinesBackend`.
+def load_natlas(model_id: str = DEFAULT_MODEL_ID, *, token: str | None = None) -> tuple[Any, Any]:
+    """Load N-ATLAS once and return ``(model, tokenizer)``.
 
     Uses ``device_map="auto"`` so the 8B model shards across available GPUs (e.g.
-    Kaggle's 2x T4) instead of overflowing a single card.
-    """
-    import outlines
-
-    auth = resolve_token(token)
-    return outlines.models.transformers(
-        model_id,
-        model_kwargs={"token": auth, "device_map": "auto", "torch_dtype": "float16"},
-        tokenizer_kwargs={"token": auth},
-    )
-
-
-def load_text_generator(
-    model_id: str = DEFAULT_MODEL_ID, *, token: str | None = None
-) -> Callable[[str, int], str]:
-    """Return an *unconstrained* text generator — the benchmark's raw baseline.
-
-    The returned callable takes ``(prompt, max_new_tokens)`` and returns the model's
-    raw completion, which the benchmark then tries to parse as JSON.
+    two T4s) instead of overflowing a single card. The same model serves both the
+    raw baseline and the constrained backend, so it is loaded only once.
     """
     import torch
     from transformers import AutoModelForCausalLM, AutoTokenizer
@@ -104,14 +86,34 @@ def load_text_generator(
     model = AutoModelForCausalLM.from_pretrained(
         model_id, token=auth, torch_dtype=torch.float16, device_map="auto"
     )
-    input_device = model.get_input_embeddings().weight.device
+    return model, tokenizer
 
-    def generate(prompt: str, max_new_tokens: int = 512) -> str:
-        inputs = tokenizer(prompt, return_tensors="pt").to(input_device)
-        output = model.generate(
-            **inputs, max_new_tokens=max_new_tokens, do_sample=False
-        )
-        text = tokenizer.decode(output[0][inputs["input_ids"].shape[1] :], skip_special_tokens=True)
-        return text
 
-    return generate
+def raw_generate(model: Any, tokenizer: Any, prompt: str, max_new_tokens: int = 256) -> str:
+    """Unconstrained generation — the benchmark's raw baseline."""
+    inputs = tokenizer(prompt, return_tensors="pt").to(model.get_input_embeddings().weight.device)
+    output = model.generate(
+        **inputs,
+        max_new_tokens=max_new_tokens,
+        do_sample=False,
+        pad_token_id=tokenizer.eos_token_id,
+    )
+    return tokenizer.decode(output[0][inputs["input_ids"].shape[1] :], skip_special_tokens=True)
+
+
+def load_outlines_model(
+    model_id: str = DEFAULT_MODEL_ID, *, token: str | None = None
+) -> Any:
+    """Load N-ATLAS as an Outlines model (optional alternative backend; needs Rust).
+
+    Only used with :class:`~gyara.structured.OutlinesBackend`; prefer
+    :func:`load_natlas` with :class:`~gyara.structured.TransformersJsonBackend`.
+    """
+    import outlines
+
+    auth = resolve_token(token)
+    return outlines.models.transformers(
+        model_id,
+        model_kwargs={"token": auth, "device_map": "auto", "torch_dtype": "float16"},
+        tokenizer_kwargs={"token": auth},
+    )
