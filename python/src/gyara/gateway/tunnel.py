@@ -59,11 +59,11 @@ def _download_cloudflared(path: str = "cloudflared") -> str:
 
 def main(port: int = 8000) -> None:
     """Load N-ATLAS, serve the Gateway, and print a public tunnel URL (blocks)."""
-    from ..runtime import load_dotenv, load_natlas
+    from ..runtime import load_natlas, load_token
     from ..structured import PromptedJsonBackend
     from .app import create_app
 
-    load_dotenv()
+    load_token()  # pull HF_TOKEN from Colab/Kaggle secrets or .env
     api_key = os.environ.get("GYARA_API_KEY")
     if not api_key:
         print("WARNING: GYARA_API_KEY is not set — the tunnel will be open to anyone.")

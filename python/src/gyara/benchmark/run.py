@@ -11,40 +11,17 @@ harness and extraction logic it calls are unit-tested.
 
 from __future__ import annotations
 
-import os
-
-
-def load_token() -> None:
-    """Populate HF_TOKEN from Colab or Kaggle secrets, if not already in the env."""
-    if os.environ.get("HF_TOKEN"):
-        return
-    try:  # Colab
-        from google.colab import userdata
-
-        os.environ["HF_TOKEN"] = userdata.get("HF_TOKEN")
-        return
-    except Exception:  # noqa: BLE001 - not on Colab
-        pass
-    try:  # Kaggle
-        from kaggle_secrets import UserSecretsClient
-
-        os.environ["HF_TOKEN"] = UserSecretsClient().get_secret("HF_TOKEN")
-        return
-    except Exception:  # noqa: BLE001 - not on Kaggle
-        pass
-    print("No Colab/Kaggle secret found; relying on the HF_TOKEN env var.")
-
 
 def _raw_prompt(prompt: str, schema: dict) -> str:
     return f"{prompt}\nReturn only a JSON object matching: {schema}"
 
 
 def main() -> None:
-    load_token()
-
     from gyara.benchmark import TASKS, run_raw
-    from gyara.runtime import load_natlas, raw_generate
+    from gyara.runtime import load_natlas, load_token, raw_generate
     from gyara.structured import PromptedJsonBackend, Structured
+
+    load_token()
 
     print(f"Loading N-ATLAS once ({len(TASKS)} tasks)...")
     model, tokenizer = load_natlas()

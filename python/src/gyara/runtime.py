@@ -18,6 +18,7 @@ from typing import Any
 
 __all__ = [
     "resolve_token",
+    "load_token",
     "load_dotenv",
     "encoder_from_tokenizer",
     "load_natlas",
@@ -44,6 +45,31 @@ def load_dotenv(path: str | os.PathLike[str] = ".env") -> None:
             continue
         key, _, value = line.partition("=")
         os.environ.setdefault(key.strip(), value.strip().strip("'\""))
+
+
+def load_token() -> None:
+    """Populate ``HF_TOKEN`` from Colab or Kaggle secrets, or a ``.env`` file.
+
+    No-op if ``HF_TOKEN`` is already in the environment. Safe to call anywhere a GPU
+    host needs the gated model.
+    """
+    if os.environ.get("HF_TOKEN"):
+        return
+    try:  # Colab
+        from google.colab import userdata
+
+        os.environ["HF_TOKEN"] = userdata.get("HF_TOKEN")
+        return
+    except Exception:  # noqa: BLE001 - not on Colab
+        pass
+    try:  # Kaggle
+        from kaggle_secrets import UserSecretsClient
+
+        os.environ["HF_TOKEN"] = UserSecretsClient().get_secret("HF_TOKEN")
+        return
+    except Exception:  # noqa: BLE001 - not on Kaggle
+        pass
+    load_dotenv()
 
 
 def resolve_token(token: str | None = None) -> str:
