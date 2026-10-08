@@ -20,8 +20,23 @@ Llama-3 tokenizer fragments Nigerian languages, structured output is unreliable 
 
 | Pillar | What it guarantees | Status |
 | --- | --- | --- |
-| **1 — Structured output** | Schema-valid JSON and tool-calls, by construction (constrained decoding) | Planned |
+| **1 — Structured output** | Schema-valid JSON and tool-calls (guided generation + validate/repair, or constrained decoding) | **Available** |
 | **2 — Language normalization** | Clean Nigerian-language input + honest token budgeting for the 8k window | **Available** |
+
+## Result on N-ATLAS
+
+On an 8-task extraction benchmark (English, Nigerian Pidgin, and Yoruba), run on the
+live N-ATLAS model:
+
+| | Valid, schema-conforming records |
+| --- | --- |
+| **Raw** — `json.loads` of the model's output | **0 / 8** |
+| **Gyara** — guide → extract → validate → repair | **8 / 8** |
+
+Same model, same prompts. N-ATLAS reliably produces the right content but wraps it in
+`​`​`json fences and often echoes the schema itself, so naive parsing fails every time;
+Gyara recovers the correct record (including from the Yoruba sentence). Content tracks
+the model's own accuracy — Gyara guarantees the *structure*, not the model's reading.
 
 ## Packages
 
