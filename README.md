@@ -25,8 +25,10 @@ Llama-3 tokenizer fragments Nigerian languages, structured output is unreliable 
 
 ## Packages
 
-- [`python/`](./python) — the Python SDK. Pillar 2 ships today (pure stdlib).
-- `typescript/` — the TypeScript SDK (typed client + client-side normalizer). _Coming._
+- [`python/`](./python) — the Python SDK. Both pillars + the constrained-decoding
+  backend and benchmark.
+- [`typescript/`](./typescript) — the TypeScript SDK for Node and the browser
+  (typed client, Zod → JSON Schema, client-side normalizer).
 - `gateway/` — the OpenAI-compatible proxy that does constrained decoding server-side.
   _Coming._
 
