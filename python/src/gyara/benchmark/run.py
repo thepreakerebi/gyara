@@ -1,10 +1,12 @@
 """Run the Gyara JSON-validity benchmark on the live N-ATLAS model.
 
-Designed for a Colab or Kaggle GPU notebook (see notebooks/README.md). It loads
-N-ATLAS for the raw baseline, frees it, then loads the constrained Outlines model.
+Entry point for a Colab/Kaggle GPU notebook: ``from gyara.benchmark.run import main``.
+It loads N-ATLAS once, then compares a raw-JSON baseline against Gyara's guided,
+validated output. Lives in the package (not a fetched script) so a notebook always
+runs the installed version, with no CDN caching.
 
-This script needs a GPU and the gated weights; it is intentionally not part of the
-local test suite. The harness logic it calls (`gyara.benchmark`) is unit-tested.
+Needs a GPU and the gated weights, so it is not part of the local test suite; the
+harness and extraction logic it calls are unit-tested.
 """
 
 from __future__ import annotations

@@ -21,12 +21,11 @@ Rust toolchain), so it installs cleanly on both Colab and Kaggle images.
    !pip install -q ./gyara_src/python lm-format-enforcer jsonschema pydantic bitsandbytes
    ```
 
-4. Cell 2 — run:
+4. Cell 2 — run (imports from the installed package, so it is always current):
 
    ```python
-   import urllib.request
-   url = "https://raw.githubusercontent.com/thepreakerebi/gyara/main/python/notebooks/run_benchmark.py"
-   exec(urllib.request.urlopen(url).read().decode()); main()
+   from gyara.benchmark.run import main
+   main()
    ```
 
 ## Kaggle (alternative)
