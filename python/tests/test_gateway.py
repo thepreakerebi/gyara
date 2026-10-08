@@ -38,6 +38,19 @@ def test_missing_fields_are_422():
     assert resp.status_code == 422  # schema field required
 
 
+class _FailingBackend:
+    def generate_json(self, prompt, schema):
+        raise RuntimeError("secret internal detail")
+
+
+def test_internal_errors_are_not_leaked():
+    client = TestClient(create_app(_FailingBackend()))
+    resp = client.post("/v1/structured", json={"prompt": "x", "schema": SCHEMA})
+    assert resp.status_code == 500
+    assert "secret internal detail" not in resp.text
+    assert resp.json()["detail"] == "generation failed"
+
+
 def test_api_key_enforced_when_set():
     client = make_client(response={"name": "Ada"}, api_key="secret")
     body = {"prompt": "who?", "schema": SCHEMA}

@@ -58,7 +58,13 @@ def create_app(backend: StructuredBackend, *, api_key: str | None = None) -> Fas
         try:
             data = client.generate(request.prompt, request.json_schema)
         except SchemaError as error:
-            raise HTTPException(status_code=422, detail=str(error)) from error
+            raise HTTPException(
+                status_code=422, detail=f"output did not match the schema: {error}"
+            ) from error
+        except HTTPException:
+            raise
+        except Exception as error:  # noqa: BLE001 - never leak internals to the client
+            raise HTTPException(status_code=500, detail="generation failed") from error
         return StructuredResponse(data=data)
 
     return app

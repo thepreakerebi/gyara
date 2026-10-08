@@ -260,6 +260,7 @@ dev = [
     { name = "pydantic" },
     { name = "pytest" },
     { name = "ruff" },
+    { name = "uvicorn" },
 ]
 gateway = [
     { name = "fastapi" },
@@ -297,6 +298,7 @@ requires-dist = [
     { name = "ruff", marker = "extra == 'dev'", specifier = ">=0.6" },
     { name = "torch", marker = "extra == 'model'", specifier = ">=2.2" },
     { name = "transformers", marker = "extra == 'model'", specifier = ">=4.44" },
+    { name = "uvicorn", marker = "extra == 'dev'", specifier = ">=0.30" },
     { name = "uvicorn", marker = "extra == 'gateway'", specifier = ">=0.30" },
 ]
 provides-extras = ["structured", "model", "outlines", "gateway", "dev"]
