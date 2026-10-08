@@ -148,6 +148,31 @@ GET  /health
 
 Set `GYARA_API_KEY` to require `Authorization: Bearer <key>`.
 
+## Install with a coding agent
+
+Paste this into Claude Code, Cursor, or any coding agent to add Gyara to your project:
+
+```text
+Add Gyara (https://github.com/thepreakerebi/gyara) to get schema-valid structured
+output from Nigeria's N-ATLAS LLM, in <Python | TypeScript>.
+
+Python:
+- Install: pip install "gyara @ git+https://github.com/thepreakerebi/gyara.git#subdirectory=python"
+- Load the model with `from gyara.runtime import load_natlas` (GPU) and use
+  `from gyara.structured import Structured, PromptedJsonBackend`:
+  client = Structured(PromptedJsonBackend(model, tokenizer)); client.generate(prompt, schema=MyPydanticModel)
+- No GPU? Point at a running Gyara Gateway over HTTP (POST /v1/structured {prompt, schema} -> {data}).
+
+TypeScript:
+- Install: clone the repo, then `cd typescript && npm install` plus `npm install zod`.
+- import { Structured, GatewayBackend } from "gyara"; define the shape with a Zod schema;
+  new Structured(new GatewayBackend("<gateway-url>/v1/structured", { apiKey })).generate(prompt, schema)
+
+Read the root README and the python/ and typescript/ READMEs for the exact API. Use the
+PromptedJsonBackend (transformers-only, most portable). Every returned value is validated
+against my schema, so handle the thrown SchemaError on a miss.
+```
+
 ---
 
 ## Verify it yourself
