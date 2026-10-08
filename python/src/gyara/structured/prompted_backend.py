@@ -52,28 +52,22 @@ def extract_json(text: str) -> Any:
     return candidates[0]
 
 
-def _describe_fields(schema: dict) -> str:
-    properties = schema.get("properties", {})
-    required = set(schema.get("required", list(properties)))
-    parts = []
-    for key, sub in properties.items():
-        label = f'"{key}"'
+def _allowed_values(schema: dict) -> str:
+    """Plain-language note on any enum fields, to steer the model to valid choices."""
+    notes = []
+    for key, sub in schema.get("properties", {}).items():
         if isinstance(sub, dict) and sub.get("enum"):
-            label += f" (one of: {', '.join(map(str, sub['enum']))})"
-        elif isinstance(sub, dict) and sub.get("type"):
-            label += f" ({sub['type']})"
-        if key not in required:
-            label += " [optional]"
-        parts.append(label)
-    return ", ".join(parts) if parts else "the fields in the schema"
+            notes.append(f'"{key}" must be one of: {", ".join(map(str, sub["enum"]))}')
+    return (" " + "; ".join(notes) + ".") if notes else ""
 
 
 def _instruction(prompt: str, schema: dict) -> str:
     return (
         f"{prompt}\n\n"
-        f"Reply with ONLY a single JSON object using exactly these keys: "
-        f"{_describe_fields(schema)}.\n"
-        f"No markdown, no code fences, no explanation, no schema. JSON:"
+        f"Extract the answer and reply with ONLY a JSON object matching this schema, "
+        f"filled with the real values from the text (not blanks or zeros):\n"
+        f"{json.dumps(schema)}.{_allowed_values(schema)}\n"
+        f"No markdown, no code fences, no explanation. JSON:"
     )
 
 

@@ -42,7 +42,7 @@ def _raw_prompt(prompt: str, schema: dict) -> str:
 def main() -> None:
     load_token()
 
-    from gyara.benchmark import TASKS, run_gyara, run_raw
+    from gyara.benchmark import TASKS, run_raw
     from gyara.runtime import load_natlas, raw_generate
     from gyara.structured import PromptedJsonBackend, Structured
 
@@ -53,24 +53,21 @@ def main() -> None:
     def raw_fn(prompt: str, schema: dict) -> str:
         return raw_generate(model, tokenizer, _raw_prompt(prompt, schema))
 
-    # Diagnostic: show one real generation so a systematic failure is visible.
-    _, prompt0, schema0 = TASKS[0]
-    print("sample raw  :", repr(raw_fn(prompt0, schema0)[:160]))
-    try:
-        print("sample gyara:", client.generate(prompt0, schema0))
-    except Exception as exc:  # noqa: BLE001 - surface the real error
-        print("sample gyara ERROR:", repr(exc))
-
-    print("Phase 1/2 - raw N-ATLAS baseline")
+    print("\nPhase 1/2 - raw N-ATLAS baseline (strict json.loads of the output)")
     raw = run_raw(TASKS, raw_fn)
     print(f"RAW    valid {raw.valid}/{raw.total} ({raw.rate:.0%})  failures={list(raw.failures)}")
 
-    print("Phase 2/2 - Gyara constrained output")
-    gyara = run_gyara(TASKS, client)
-    print(
-        f"GYARA  valid {gyara.valid}/{gyara.total} "
-        f"({gyara.rate:.0%})  failures={list(gyara.failures)}"
-    )
+    # Print every Gyara output so content can be verified, not just validity.
+    print("\nPhase 2/2 - Gyara structured output (shown in full to confirm real content)")
+    valid = 0
+    for name, prompt, schema in TASKS:
+        try:
+            result = client.generate(prompt, schema)
+            print(f"  {name}: {result}")
+            valid += 1
+        except Exception as exc:  # noqa: BLE001 - surface the real error per task
+            print(f"  {name}: FAILED {exc!r}")
+    print(f"GYARA  valid {valid}/{len(TASKS)} ({valid / len(TASKS):.0%})")
 
 
 if __name__ == "__main__":
